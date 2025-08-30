@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Lupo Solitario — Tabella del Destino & Calcolatore (v7.2.9)</title>
+  <meta name="theme-color" content="#201a12">
+  <style>
+    :root{
+      --bg:#1c1710; --panel:#231c13; --ink:#e8dec7; --muted:#b9ae95; --accent:#caa25d; --accent-dark:#8a6a2c;
+      --emerald:#34d399; --emerald-ink:#c8f3df; --ring:#caa25d55;
+      --mono: ui-monospace, Menlo, Monaco, Consolas, "Courier New", monospace;
+      --serif: "Palatino Linotype", Palatino, "Times New Roman", Georgia, serif;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", Helvetica, Arial;
+      --pulse-red: rgba(200,40,40,.85);
+      --pulse-amber: rgba(210,150,40,.85);
+      --pulse-green: rgba(40,160,90,.85);
+    }
+    *{ box-sizing:border-box }
+    html, body { touch-action: manipulation; }
+    body{ margin:0; color:var(--ink);
+      background: radial-gradient(1200px 600px at 20% 0%, #2c2216 0, transparent 60%),
+                 radial-gradient(1000px 700px at 100% 100%, #2a200f 0, transparent 70%), var(--bg);
+      font-family: var(--serif); -webkit-font-smoothing: antialiased; }
+    .wrap{ max-width:960px; margin:auto; padding:14px; display:grid; gap:14px }
+    header{ display:flex; align-items:center; justify-content:center; border-bottom:3px double #6e5a33; padding:10px 0; position:relative }
+    .title{ font-size:clamp(22px, 6vw, 38px); letter-spacing:.5px; margin:0; font-variant: small-caps; text-align:center }
+    .mute{ position:absolute; right:10px; top:50%; transform:translateY(-50%); font-family:var(--sans); font-size:14px; color:var(--muted) }
+    .card{ background:var(--panel); border:1px solid #6e5a3344; border-radius:16px; padding:14px; box-shadow: 0 6px 26px #00000033, inset 0 0 40px #00000033 }
+    .h2{ margin:0 0 6px; font-size:18px; font-variant: small-caps; letter-spacing:.4px }
+    .big{ font-size:clamp(80px, 22vw, 140px); text-align:center; font-weight:900; margin:6px 0 10px; line-height:1; color:var(--emerald) }
+    .btn{ border:2px solid var(--accent-dark); background:linear-gradient(180deg, #7a6330, #5a4620); color:#f2e6c7; padding:12px 14px; border-radius:12px; font-weight:800; cursor:pointer; width:100%;
+      box-shadow: 0 6px 0 #3e3113, 0 12px 18px #0006; text-transform: uppercase; letter-spacing: .6px; text-align:center; }
+    .btn:active{ transform: translateY(1px); box-shadow: 0 3px 0 #3e3113, 0 6px 12px #0006; }
+    .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+    .mono{ font-family:var(--mono) }
+    .muted{ color:var(--muted) }
+    label{ display:block; font-family:var(--sans); font-size:14px; color:var(--muted); margin-bottom:6px }
+    input[type="number"]{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid #6e5a3355; background:#1b160f; color:var(--emerald-ink); font-family:var(--mono);
+      box-shadow: inset 0 0 0 1px #2f7f5d55; appearance:textfield; font-size:18px; }
+    input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button{ display:none }
+    .grid{ display:grid; grid-template-columns:1fr; gap:12px }
+    @media (min-width: 780px){ .grid.split{ grid-template-columns: 1fr 1fr; } }
+    .grid100{ width:100%; border-collapse:collapse; table-layout: fixed }
+    .grid100 td{ border:1px solid #6e5a3344; width:10%; aspect-ratio:1/1; text-align:center; vertical-align:middle; color:var(--emerald); font-weight:800; border-radius:6px; background:#17120b; font-size: clamp(15px, 4.6vw, 22px);}
+    table{ width:100%; border-collapse:collapse; font-size:14px }
+    th, td{ padding:6px 8px; border-bottom:1px solid #6e5a3333 }
+    th{ background:#2a2216; position:sticky; top:0; color:#e8dec7 }
+    .hist{ max-height:320px; overflow:auto; border:1px solid #6e5a3333; border-radius:10px }
+    footer{ color:var(--muted); font-size:12px; text-align:center; padding:6px }
+    .stepper{ display:flex; gap:6px; align-items:center }
+    .mini{ padding:10px 12px; border-radius:10px; border:1px solid #6e5a3344; background:#2a2216; color:#f0e6cd; font-weight:800; touch-action: manipulation; }
+    #rn[readonly]{ opacity:.9 }
+    .ratioWrap{ margin-top:8px }
+    .ratioBar{ height:12px; border-radius:999px; background:#1b160f; border:1px solid #6e5a3344; position:relative; overflow:hidden }
+    .ratioFillL{ position:absolute; left:0; top:0; bottom:0; background:#7a2f2f66 }
+    .ratioFillR{ position:absolute; right:0; top:0; bottom:0; background:#2f7a4a66 }
+    .ratioMid{ position:absolute; left:50%; top:-2px; bottom:-2px; width:2px; background:#6e5a33aa }
+    .ratioKnob{ position:absolute; top:-4px; width:10px; height:20px; border-radius:3px; background:linear-gradient(180deg,#caa25d,#8a6a2c); box-shadow:0 0 0 2px #0006 }
+    .turnBadge{ display:inline-block; padding:4px 8px; border:1px solid #6e5a3344; border-radius:10px; background:#2a2216; font-weight:700; margin-top:8px }
+    .activeRow td:nth-child(2){ background:#1d2918; box-shadow: inset 0 0 0 1px #2f7f5d88; color:#daf7e2; }
+    @keyframes pulse-red { 0%{ box-shadow:0 0 0 0 var(--pulse-red)} 100%{ box-shadow:0 0 0 14px rgba(0,0,0,0)} }
+    @keyframes pulse-amber { 0%{ box-shadow:0 0 0 0 var(--pulse-amber)} 100%{ box-shadow:0 0 0 14px rgba(0,0,0,0)} }
+    @keyframes pulse-green { 0%{ box-shadow:0 0 0 0 var(--pulse-green)} 100%{ box-shadow:0 0 0 14px rgba(0,0,0,0)} }
+    .alertPulseRed{ animation: pulse-red .6s ease-out 1; border-color:#a33 }
+    .alertPulseAmber{ animation: pulse-amber .6s ease-out 1; border-color:#b67a1a }
+    .hintPulseGreen{ animation: pulse-green .7s ease-out 1; border-color:#2f7f5d }
+    .summaryRow{ display:flex; align-items:center; justify-content:space-between; gap:10px }
+    .summaryActions{ display:flex; gap:6px }
+    .btnMini{ border:1px solid #6e5a3344; background:#2a2216; color:#e8dec7; padding:4px 8px; border-radius:10px; font-weight:700; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1 class="title">Lupo Solitario</h1>
+      <label class="mute"><input type="checkbox" id="muteAll" /> Disattiva suoni</label>
+    </header>
+
+    <section class="card" aria-labelledby="h-td">
+      <h2 id="h-td" class="h2">Tabella del Destino</h2>
+      <div class="big mono" id="rngBig">–</div>
+      <div class="row"><button id="rngBtnTop" class="btn" type="button">➤ Estrai Numero</button></div>
+      <details style="margin-top:10px">
+        <summary><span class="summaryRow"><span>Mostra la griglia 10×10</span></span></summary>
+        <div style="overflow:auto; margin-top:8px"><table class="grid100" id="rngGrid"></table></div>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="h-cc">
+      <h2 id="h-cc" class="h2">Calcolatore di Combattimento</h2>
+      <div class="grid split">
+        <div>
+          <label>Combattività <strong>(Lupo Solitario)</strong></label>
+          <div class="stepper">
+            <button class="mini" type="button" data-step="csHero" data-delta="-1">−</button>
+            <input type="number" id="csHero" value="0" inputmode="numeric" pattern="[0-9]*" />
+            <button class="mini" type="button" data-step="csHero" data-delta="1">+</button>
+          </div>
+        </div>
+        <div>
+          <label>Combattività <strong>(Nemico)</strong></label>
+          <div class="stepper">
+            <button class="mini" type="button" data-step="csEnemy" data-delta="-1">−</button>
+            <input type="number" id="csEnemy" value="0" inputmode="numeric" pattern="[0-9]*" />
+            <button class="mini" type="button" data-step="csEnemy" data-delta="1">+</button>
+          </div>
+        </div>
+        <div>
+          <label>Resistenza <strong>(Lupo Solitario)</strong></label>
+          <div class="stepper">
+            <button class="mini" type="button" data-step="endHero" data-delta="-1">−</button>
+            <input type="number" id="endHero" value="0" inputmode="numeric" pattern="[0-9]*" />
+            <button class="mini" type="button" data-step="endHero" data-delta="1">+</button>
+          </div>
+        </div>
+        <div>
+          <label>Resistenza <strong>(Nemico)</strong></label>
+          <div class="stepper">
+            <button class="mini" type="button" data-step="endEnemy" data-delta="-1">−</button>
+            <input type="number" id="endEnemy" value="0" inputmode="numeric" pattern="[0-9]*" />
+            <button class="mini" type="button" data-step="endEnemy" data-delta="1">+</button>
+          </div>
+        </div>
+        <div>
+          <label>Rapporto di Forza (calcolato)</label>
+          <input type="number" id="ratio" value="0" readonly />
+          <div class="ratioWrap">
+            <div class="ratioBar" id="ratioBar">
+              <div class="ratioFillL" id="ratioFillL" style="width:50%"></div>
+              <div class="ratioFillR" id="ratioFillR" style="width:50%"></div>
+              <div class="ratioMid"></div>
+              <div class="ratioKnob" id="ratioKnob" style="left:calc(50% - 5px)"></div>
+            </div>
+          </div>
+          <div class="turnBadge">Turno: <span id="turno">1</span></div>
+        </div>
+        <div>
+          <label>Numero casuale (0–9)</label>
+          <div class="row">
+            <input type="number" id="rn" min="0" max="9" step="1" value="0" style="flex:1" readonly />
+            <button class="btn" type="button" id="rngBtnCalc" style="flex:1 1 200px">➤ Estrai Numero</button>
+          </div>
+          <div class="muted" style="margin-top:4px">I pulsanti “Estrai Numero” fanno solo l’estrazione. Premi “Calcola danni” per applicare i risultati.</div>
+        </div>
+      </div>
+
+      <div class="row" style="justify-content:center, margin-top:10px; gap:8px">
+        <button class="btn" type="button" id="calc">Calcola danni</button>
+        <button class="btn" type="button" id="resetCalc">Reset</button>
+      </div>
+
+      <div style="text-align:center; margin-top:10px">
+        <div class="sub">Risultato <strong>(Lupo Solitario / Nemico)</strong></div>
+        <div class="big mono" id="resBig">—</div>
+      </div>
+
+      <div class="grid split" style="margin-top:12px">
+        <section>
+          <h3 class="h2">Resistenza — Lupo Solitario</h3>
+          <table id="tblHero" aria-label="Resistenza Lupo Solitario">
+            <thead><tr><th>#</th><th>Valore</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </section>
+        <section>
+          <h3 class="h2">Resistenza — Nemico</h3>
+          <table id="tblEnemy" aria-label="Resistenza Nemico">
+            <thead><tr><th>#</th><th>Valore</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </section>
+      </div>
+
+      <details style="margin-top:12px">
+        <summary>
+          <span class="summaryRow">
+            <span>Cronologia (locale) — Combattimenti</span>
+            <span class="summaryActions"><button class="btnMini" type="button" id="clearCalc">Cancella Cronologia Locale</button></span>
+          </span>
+        </summary>
+        <div class="hist" style="margin-top:8px">
+          <table id="calcTable"><thead><tr><th>#</th><th>CR</th><th>#</th><th>Lupo Solitario</th><th>Nemico</th></tr></thead><tbody></tbody></table>
+        </div>
+      </details>
+    </section>
+
+    <section class="card">
+      <details>
+        <summary>
+          <span class="summaryRow">
+            <span>Cronologia (locale) — Estrazioni</span>
+            <span class="summaryActions"><button class="btnMini" type="button" id="clearRng">Cancella Cronologia Locale</button></span>
+          </span>
+        </summary>
+        <div class="hist" style="margin-top:8px">
+          <table id="rngTable"><thead><tr><th>#</th><th>Numero</th><th class="mono">Ora</th></tr></thead><tbody></tbody></table>
+        </div>
+      </details>
+    </section>
+
+    <section class="card">
+      <details>
+        <summary><span class="summaryRow"><span>Tabella dei Risultati di Combattimento</span></span></summary>
+        <div class="muted" style="margin:.5em 0">Colonne (Rapporto di Forza): ≤−11, −10/−9, −8/−7, −6/−5, −4/−3, −2/−1, 0, +1/+2, +3/+4, +5/+6, +7/+8, +9/+10, ≥+11. Righe: RN (Numero dalla Tabella del Destino).</div>
+        <div class="hist">
+          <table>
+            <thead>
+              <tr>
+                <th>RN</th>
+                <th>≤−11</th><th>−10/−9</th><th>−8/−7</th><th>−6/−5</th><th>−4/−3</th><th>−2/−1</th><th>0</th>
+                <th>+1/+2</th><th>+3/+4</th><th>+5/+6</th><th>+7/+8</th><th>+9/+10</th><th>≥+11</th>
+              </tr>
+            </thead>
+            <tbody id="crtBody"></tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <footer>© <span id="year"></span> • Progetto fan-made ispirato a Lupo Solitario.</footer>
+  </div>
+
+  <script>
+    const TABLE = [1, 3, 9, 3, 2, 7, 5, 0, 2, 5, 5, 6, 2, 5, 1, 3, 8, 4, 3, 5, 7, 6, 7, 8, 1, 4, 3, 1, 4, 5, 4, 0, 8, 7, 3, 0, 8, 7, 2, 5, 7, 4, 0, 0, 9, 6, 2, 0, 8, 1, 1, 6, 7, 9, 6, 9, 0, 3, 3, 9, 8, 9, 2, 8, 1, 3, 4, 9, 7, 1, 6, 3, 0, 7, 5, 0, 5, 4, 6, 6, 7, 2, 1, 4, 2, 9, 6, 4, 2, 6, 0, 9, 6, 4, 8, 2, 8, 5, 8, 3];
+    const CRT = [["0/k", "0/k", "0/8", "0/6", "1/6", "2/5", "3/5", "4/5", "5/4", "6/4", "7/4", "8/3", "9/3"], ["0/k", "0/8", "0/7", "1/6", "2/5", "3/5", "4/4", "5/4", "6/3", "7/3", "8/3", "9/3", "10/2"], ["0/8", "0/7", "1/6", "2/5", "3/5", "4/4", "5/4", "6/3", "7/3", "8/3", "9/2", "10/2", "11/2"], ["0/8", "1/7", "2/6", "3/5", "4/4", "5/4", "6/3", "7/3", "8/2", "9/2", "10/2", "11/2", "12/2"], ["1/7", "2/6", "3/5", "4/4", "5/4", "6/3", "7/2", "8/2", "9/2", "10/2", "11/2", "12/2", "14/1"], ["2/6", "3/6", "4/5", "5/4", "6/3", "7/2", "8/2", "9/2", "10/2", "11/1", "12/1", "14/1", "16/1"], ["3/5", "4/5", "5/4", "6/3", "7/2", "8/2", "9/1", "10/1", "11/1", "12/0", "14/0", "16/0", "18/0"], ["4/4", "5/4", "6/3", "7/2", "8/1", "9/1", "10/0", "11/0", "12/0", "14/0", "16/0", "18/0", "k/0"], ["5/3", "6/3", "7/2", "8/0", "9/0", "10/0", "11/0", "12/0", "14/0", "16/0", "18/0", "k/0", "k/0"], ["6/0", "7/0", "8/0", "9/0", "10/0", "11/0", "12/0", "14/0", "16/0", "18/0", "k/0", "k/0", "k/0"]];
+
+    // --- Audio (WebAudio) ---
+    const muteAll = () => document.getElementById('muteAll').checked;
+    let actx = null;
+    function ac(){ if (!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+    function beep(type='sine', freq=440, dur=0.15, gain=0.03){
+      if(muteAll()) return; const ctx = ac();
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = type; o.frequency.value = freq; g.gain.value = gain;
+      o.connect(g); g.connect(ctx.destination);
+      const t = ctx.currentTime; o.start(t); o.stop(t+dur);
+    }
+    function victorySound(){ if(muteAll()) return; const ctx = ac(); const seq=[392,494,587, 494,587,784]; const t0=ctx.currentTime;
+      seq.forEach((f,i)=>{ const o=ctx.createOscillator(), g=ctx.createGain(); o.type='sawtooth'; o.frequency.value=f; g.gain.value=0.04; o.connect(g); g.connect(ctx.destination); const t=t0+i*0.16; o.start(t); o.stop(t+0.22); });
+    }
+    function sadTrumpet(){ if(muteAll()) return; const ctx = ac(); const t0=ctx.currentTime; const notes=[392,349,330]; const dur=0.28;
+      notes.forEach((f,i)=>{ const o=ctx.createOscillator(), g=ctx.createGain(), f1=ctx.createBiquadFilter(); o.type='sawtooth'; f1.type='lowpass'; f1.frequency.setValueAtTime(1800,t0+i*dur);
+        g.gain.setValueAtTime(0.0001,t0+i*dur); g.gain.exponentialRampToValueAtTime(0.06,t0+i*dur+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t0+(i+1)*dur-0.02);
+        o.frequency.setValueAtTime(f,t0+i*dur); o.connect(f1); f1.connect(g); g.connect(ctx.destination); o.start(t0+i*dur); o.stop(t0+(i+1)*dur); });
+    }
+    const alertSound = () => beep('square', 880, 0.12, 0.04);
+    function errorSound(){ if(muteAll()) return; const ctx = ac(); const t=ctx.currentTime;
+      const o=ctx.createOscillator(), g=ctx.createGain(); o.type='square'; o.frequency.setValueAtTime(220,t); g.gain.setValueAtTime(0.05,t);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.18); setTimeout(()=>beep('square',180,0.14,0.05),80);
+    }
+    const deathSound = () => sadTrumpet();
+
+    // --- Utils ---
+    function randomIndex100(){ const b=new Uint8Array(1); let x; do{ crypto.getRandomValues(b); x=b[0]; }while(x>=200); return x%100; }
+    function rollFromTable(){ return TABLE[randomIndex100()]; }
+    function pad2(n){ return String(n).padStart(2,'0'); }
+    function timeNow(){ const d=new Date(); return pad2(d.getHours())+':'+pad2(d.getMinutes())+':'+pad2(d.getSeconds()); }
+    function bucketIndex(cr){ if (cr<=-11) return 0; if (cr<=-9) return 1; if (cr<=-7) return 2; if (cr<=-5) return 3; if (cr<=-3) return 4; if (cr<=-1) return 5; if (cr===0) return 6; if (cr<=2) return 7; if (cr<=4) return 8; if (cr<=6) return 9; if (cr<=8) return 10; if (cr<=10) return 11; return 12; }
+
+    // --- DOM refs ---
+    const rngBig = document.getElementById('rngBig');
+    const rngBtnTop = document.getElementById('rngBtnTop');
+    const rngBtnCalc = document.getElementById('rngBtnCalc');
+    const csHero = document.getElementById('csHero');
+    const csEnemy = document.getElementById('csEnemy');
+    const endHero = document.getElementById('endHero');
+    const endEnemy = document.getElementById('endEnemy');
+    const ratio = document.getElementById('ratio');
+    const rnInput = document.getElementById('rn');
+    const calcBtn = document.getElementById('calc');
+    const resetCalc = document.getElementById('resetCalc');
+    const resBig = document.getElementById('resBig');
+    const calcTableBody = document.querySelector('#calcTable tbody');
+    const crtBody = document.getElementById('crtBody');
+    const turnoEl = document.getElementById('turno');
+    const ratioFillL = document.getElementById('ratioFillL');
+    const ratioFillR = document.getElementById('ratioFillR');
+    const ratioKnob = document.getElementById('ratioKnob');
+    const tblHero = document.getElementById('tblHero').querySelector('tbody');
+    const tblEnemy = document.getElementById('tblEnemy').querySelector('tbody');
+
+    const LS_RNG = 'lw_rng_hist_v729';
+    const LS_CALC = 'lw_calc_hist_v729';
+    let rngHist = []; let calcHist = [];
+    let duelOver = false;
+    let turno = 1;
+    let needRoll = true;
+    let duelHasBegun = false;
+
+    // --- Build tables ---
+    (function(){ let html=''; const order=[1,2,3,4,5,6,7,8,9,0]; for(let i=0;i<order.length;i++){ const rn=order[i]; const row=CRT[i]; html+='<tr><td class="mono">'+rn+'</td>'+row.map(v=>'<td class="mono">'+v+'</td>').join('')+'</tr>'; } document.getElementById('crtBody').innerHTML=html; })();
+    (function(){ let html=''; for(let r=0;r<10;r++){ html+='<tr>'; for(let c=0;c<10;c++){ const idx=r*10+c; html+='<td class="mono">'+TABLE[idx]+'</td>'; } html+='</tr>'; } document.getElementById('rngGrid').innerHTML=html; })();
+
+    function buildEndTables(){
+      tblHero.innerHTML=''; tblEnemy.innerHTML='';
+      for(let i=1;i<=10;i++){ 
+        tblHero.insertAdjacentHTML('beforeend','<tr id="hr_'+i+'"><td class="mono">'+i+'</td><td class="mono" id="h_'+i+'">—</td></tr>');
+        tblEnemy.insertAdjacentHTML('beforeend','<tr id="er_'+i+'"><td class="mono">'+i+'</td><td class="mono" id="e_'+i+'">—</td></tr>');
+      }
+      highlightTurnRow();
+    }
+    function setRow1IfNeeded(){
+      if(duelHasBegun) return;
+      const hv = Number(endHero.value||0);
+      const ev = Number(endEnemy.value||0);
+      document.getElementById('h_1').textContent = hv!==0 ? hv : '—';
+      document.getElementById('e_1').textContent = ev!==0 ? ev : '—';
+    }
+
+    function renderRngHist(){ const body = document.querySelector('#rngTable tbody'); body.innerHTML=''; rngHist.forEach((r,i)=>{ body.insertAdjacentHTML('beforeend','<tr><td class="mono">'+(i+1)+'</td><td class="mono">'+r.n+'</td><td class="mono">'+r.t+'</td></tr>'); }); }
+    function renderCalcHist(){ calcTableBody.innerHTML=''; calcHist.forEach((r,i)=>{ calcTableBody.insertAdjacentHTML('beforeend','<tr><td class="mono">'+(i+1)+'</td><td class="mono">'+r.cr+'</td><td class="mono">'+r.rn+'</td><td class="mono">'+r.hero+'</td><td class="mono">'+r.enemy+'</td></tr>'); }); }
+
+    function loadStore(){ try{ rngHist = JSON.parse(localStorage.getItem(LS_RNG)||'[]'); }catch{ rngHist=[]; } try{ calcHist = JSON.parse(localStorage.getItem(LS_CALC)||'[]'); }catch{ calcHist=[]; } renderRngHist(); renderCalcHist(); }
+    function saveRng(){ localStorage.setItem(LS_RNG, JSON.stringify(rngHist)); }
+    function saveCalc(){ localStorage.setItem(LS_CALC, JSON.stringify(calcHist)); }
+
+    function updateRatio(){
+      const cr = Number(csHero.value||0) - Number(csEnemy.value||0);
+      ratio.value = cr;
+      const min=-15, max=15;
+      const clamped = Math.max(min, Math.min(max, cr));
+      const pct = (clamped - min) / (max - min);
+      ratioFillL.style.width = (pct*100).toFixed(2)+'%';
+      ratioFillR.style.width = ((1-pct)*100).toFixed(2)+'%';
+      ratioKnob.style.left = 'calc(' + (pct*100).toFixed(2) + '% - 5px)';
+    }
+
+    function setDuelOver(){ duelOver = true; }
+
+    function doRoll(){
+      const n = rollFromTable();
+      rnInput.value = n;
+      rngBig.textContent = n;
+      rngHist.push({ n, t: timeNow() });
+      saveRng(); renderRngHist();
+      needRoll = false;
+      rngBtnCalc.classList.remove('hintPulseGreen');
+      calcBtn.classList.remove('alertPulseAmber');
+    }
+
+    function parseCRTCell(s){ const [enemy, hero] = s.split('/'); return { hero, enemy }; }
+
+    function nextEmptyRow(prefix){
+      for(let i=2;i<=10;i++){ if(document.getElementById(prefix+'_'+i).textContent==='—') return i; }
+      return null;
+    }
+
+    function highlightTurnRow(){
+      for(let i=1;i<=10;i++){ 
+        const hr = document.getElementById('hr_'+i); const er = document.getElementById('er_'+i);
+        hr && hr.classList.remove('activeRow'); er && er.classList.remove('activeRow');
+      }
+      const nx = nextEmptyRow('h');
+      if(nx){ 
+        const hr = document.getElementById('hr_'+nx); const er = document.getElementById('er_'+nx);
+        hr && hr.classList.add('activeRow'); er && er.classList.add('activeRow');
+      }
+    }
+
+    function applyCombatToTables(heroDmg, enemyDmg){
+      const rh = nextEmptyRow('h'); const re = nextEmptyRow('e');
+      if(rh!==null){ 
+        const prev = document.getElementById('h_'+(rh-1)).textContent;
+        let heroNow;
+        if(prev === 'Lupo Solitario è morto'){ heroNow = 'Lupo Solitario è morto'; }
+        else { const prevNum = Number(prev)||0; heroNow = (heroDmg==='k') ? 0 : (prevNum - Number(heroDmg||0)); if(heroNow <= 0) heroNow = 'Lupo Solitario è morto'; }
+        document.getElementById('h_'+rh).textContent = heroNow;
+      }
+      if(re!==null){ 
+        const prev = document.getElementById('e_'+(re-1)).textContent;
+        let enemyNow;
+        if(prev === 'Nemico abbattuto'){ enemyNow = 'Nemico abbattuto'; }
+        else { const prevNum = Number(prev)||0; enemyNow = (enemyDmg==='k') ? 0 : (prevNum - Number(enemyDmg||0)); if(enemyNow <= 0) enemyNow = 'Nemico abbattuto'; }
+        document.getElementById('e_'+re).textContent = enemyNow;
+      }
+      const cellHero = document.getElementById('h_'+(rh||2));
+      const cellEnemy = document.getElementById('e_'+(re||2));
+      if(cellEnemy && cellEnemy.textContent === 'Nemico abbattuto' && cellHero){
+        const val = cellHero.textContent;
+        if(!isNaN(Number(val))){ cellHero.textContent = val + '  Lupo Solitario vince!'; }
+        victorySound(); setDuelOver();
+      }
+      if(cellHero && cellHero.textContent === 'Lupo Solitario è morto'){ deathSound(); setDuelOver(); }
+      highlightTurnRow();
+    }
+
+    function resetCalcAll(){
+      duelOver = false; duelHasBegun = false; turno = 1; turnoEl.textContent = turno;
+      calcHist=[]; saveCalc(); renderCalcHist(); resBig.textContent='—';
+      rnInput.value=0; rngBig.textContent='–'; needRoll = true;
+      csHero.value=0; csEnemy.value=0; endHero.value=0; endEnemy.value=0; updateRatio();
+      buildEndTables(); setRow1IfNeeded();
+      calcBtn.classList.remove('alertPulseRed','alertPulseAmber','hintPulseGreen');
+      resetCalc.classList.remove('hintPulseGreen');
+      rngBtnCalc.classList.remove('hintPulseGreen');
+    }
+
+    function pulse(el, cls){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+    function calcOnce(){
+      if(duelOver){
+        errorSound();
+        pulse(calcBtn,'alertPulseRed');
+        pulse(resetCalc,'hintPulseGreen');
+        return;
+      }
+      if(needRoll){
+        alertSound();
+        pulse(calcBtn,'alertPulseAmber');
+        pulse(rngBtnCalc,'hintPulseGreen');
+        return;
+      }
+      if(!duelHasBegun){ duelHasBegun = true; setRow1IfNeeded(); }
+      const cr = Number(csHero.value||0) - Number(csEnemy.value||0); updateRatio();
+      const rn = Math.min(9, Math.max(0, Number(rnInput.value||0)));
+      const bucket = bucketIndex(cr);
+      const rowIndex = rn===0 ? 9 : rn-1;
+      const cell = CRT[rowIndex][bucket];
+      const res = parseCRTCell(cell);
+      resBig.textContent = res.hero + ' / ' + res.enemy;
+      calcHist.push({ cr, rn, hero: res.hero, enemy: res.enemy });
+      saveCalc(); renderCalcHist();
+      applyCombatToTables(res.hero, res.enemy);
+      if(!duelOver){ turno += 1; turnoEl.textContent = turno; needRoll = true; }
+    }
+
+    const clearCalcBtn = document.getElementById('clearCalc');
+    const clearRngBtn = document.getElementById('clearRng');
+    function clearCalcHistory(){ calcHist = []; saveCalc(); renderCalcHist(); pulse(clearCalcBtn,'hintPulseGreen'); }
+    function clearRngHistory(){ rngHist = []; saveRng(); renderRngHist(); pulse(clearRngBtn,'hintPulseGreen'); }
+
+    // --- Stepper (+/-) logic & keyboard sync ---
+    document.querySelectorAll('.mini[data-step]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.preventDefault();
+        // No focus: evita la tastiera
+        const id = btn.getAttribute('data-step');
+        const delta = Number(btn.getAttribute('data-delta'))||0;
+        const input = document.getElementById(id);
+        const cur = Number(input.value||0);
+        input.value = cur + delta;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }, {passive: true});
+    });
+    function onTypedChange(){
+      updateRatio();
+      setRow1IfNeeded();
+    }
+    csHero.addEventListener('input', onTypedChange);
+    csEnemy.addEventListener('input', onTypedChange);
+    endHero.addEventListener('input', onTypedChange);
+    endEnemy.addEventListener('input', onTypedChange);
+
+    // --- Init ---
+    document.getElementById('year').textContent = new Date().getFullYear();
+    buildEndTables(); setRow1IfNeeded(); updateRatio();
+    try{ rngHist = JSON.parse(localStorage.getItem(LS_RNG)||'[]'); }catch{ rngHist=[]; }
+    try{ calcHist = JSON.parse(localStorage.getItem(LS_CALC)||'[]'); }catch{ calcHist=[]; }
+    renderRngHist(); renderCalcHist();
+
+    rngBtnTop.addEventListener('click', doRoll);
+    rngBtnCalc.addEventListener('click', doRoll);
+    calcBtn.addEventListener('click', calcOnce);
+    resetCalc.addEventListener('click', resetCalcAll);
+    clearCalcBtn.addEventListener('click', clearCalcHistory);
+    clearRngBtn.addEventListener('click', clearRngHistory);
+    document.addEventListener('keydown', (e)=>{ if(e.code==='Space'||e.code==='Enter'){ e.preventDefault(); } });
+  </script>
+</body>
+</html>
