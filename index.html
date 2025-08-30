@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <title>Lupo Solitario — Tabella del Destino & Calcolatore (v7.2.9)</title>
+  <title>Lupo Solitario — Tabella del Destino & Calcolatore (v7.3.0)</title>
   <meta name="theme-color" content="#201a12">
   <style>
     :root{
@@ -23,9 +23,9 @@
                  radial-gradient(1000px 700px at 100% 100%, #2a200f 0, transparent 70%), var(--bg);
       font-family: var(--serif); -webkit-font-smoothing: antialiased; }
     .wrap{ max-width:960px; margin:auto; padding:14px; display:grid; gap:14px }
-    header{ display:flex; align-items:center; justify-content:center; border-bottom:3px double #6e5a33; padding:10px 0; position:relative }
+    header{ display:flex; flex-direction:column; align-items:center; justify-content:center; border-bottom:3px double #6e5a33; padding:10px 0 }
     .title{ font-size:clamp(22px, 6vw, 38px); letter-spacing:.5px; margin:0; font-variant: small-caps; text-align:center }
-    .mute{ position:absolute; right:10px; top:50%; transform:translateY(-50%); font-family:var(--sans); font-size:14px; color:var(--muted) }
+    .mute{ margin-top:6px; font-family:var(--sans); font-size:14px; color:var(--muted); text-align:center }
     .card{ background:var(--panel); border:1px solid #6e5a3344; border-radius:16px; padding:14px; box-shadow: 0 6px 26px #00000033, inset 0 0 40px #00000033 }
     .h2{ margin:0 0 6px; font-size:18px; font-variant: small-caps; letter-spacing:.4px }
     .big{ font-size:clamp(80px, 22vw, 140px); text-align:center; font-weight:900; margin:6px 0 10px; line-height:1; color:var(--emerald) }
@@ -68,6 +68,7 @@
     .summaryRow{ display:flex; align-items:center; justify-content:space-between; gap:10px }
     .summaryActions{ display:flex; gap:6px }
     .btnMini{ border:1px solid #6e5a3344; background:#2a2216; color:#e8dec7; padding:4px 8px; border-radius:10px; font-weight:700; cursor:pointer; }
+    .hideme{ display:none }
   </style>
 </head>
 <body>
@@ -145,7 +146,7 @@
         </div>
       </div>
 
-      <div class="row" style="justify-content:center, margin-top:10px; gap:8px">
+      <div class="row" style="justify-content:center; margin-top:10px; gap:8px">
         <button class="btn" type="button" id="calc">Calcola danni</button>
         <button class="btn" type="button" id="resetCalc">Reset</button>
       </div>
@@ -280,8 +281,8 @@
     const tblHero = document.getElementById('tblHero').querySelector('tbody');
     const tblEnemy = document.getElementById('tblEnemy').querySelector('tbody');
 
-    const LS_RNG = 'lw_rng_hist_v729';
-    const LS_CALC = 'lw_calc_hist_v729';
+    const LS_RNG = 'lw_rng_hist_v730';
+    const LS_CALC = 'lw_calc_hist_v730';
     let rngHist = []; let calcHist = [];
     let duelOver = false;
     let turno = 1;
@@ -295,10 +296,17 @@
     function buildEndTables(){
       tblHero.innerHTML=''; tblEnemy.innerHTML='';
       for(let i=1;i<=10;i++){ 
-        tblHero.insertAdjacentHTML('beforeend','<tr id="hr_'+i+'"><td class="mono">'+i+'</td><td class="mono" id="h_'+i+'">—</td></tr>');
-        tblEnemy.insertAdjacentHTML('beforeend','<tr id="er_'+i+'"><td class="mono">'+i+'</td><td class="mono" id="e_'+i+'">—</td></tr>');
+        const cls = i>=4 ? ' class="hideme"' : '';
+        tblHero.insertAdjacentHTML('beforeend','<tr id="hr_'+i+'"'+cls+'><td class="mono">'+i+'</td><td class="mono" id="h_'+i+'">—</td></tr>');
+        tblEnemy.insertAdjacentHTML('beforeend','<tr id="er_'+i+'"'+cls+'><td class="mono">'+i+'</td><td class="mono" id="e_'+i+'">—</td></tr>');
       }
+      for(let k=1;k<=3;k++){ document.getElementById('hr_'+k).classList.remove('hideme'); document.getElementById('er_'+k).classList.remove('hideme'); }
       highlightTurnRow();
+    }
+    function revealRowIfHidden(prefix, rowIndex){
+      const id = prefix==='h' ? 'hr_' : 'er_';
+      const tr = document.getElementById(id+rowIndex);
+      if(tr && tr.classList.contains('hideme')) tr.classList.remove('hideme');
     }
     function setRow1IfNeeded(){
       if(duelHasBegun) return;
@@ -361,6 +369,7 @@
     function applyCombatToTables(heroDmg, enemyDmg){
       const rh = nextEmptyRow('h'); const re = nextEmptyRow('e');
       if(rh!==null){ 
+        revealRowIfHidden('h', rh);
         const prev = document.getElementById('h_'+(rh-1)).textContent;
         let heroNow;
         if(prev === 'Lupo Solitario è morto'){ heroNow = 'Lupo Solitario è morto'; }
@@ -368,6 +377,7 @@
         document.getElementById('h_'+rh).textContent = heroNow;
       }
       if(re!==null){ 
+        revealRowIfHidden('e', re);
         const prev = document.getElementById('e_'+(re-1)).textContent;
         let enemyNow;
         if(prev === 'Nemico abbattuto'){ enemyNow = 'Nemico abbattuto'; }
@@ -434,7 +444,6 @@
     document.querySelectorAll('.mini[data-step]').forEach(btn=>{
       btn.addEventListener('click', (e)=>{
         e.preventDefault();
-        // No focus: evita la tastiera
         const id = btn.getAttribute('data-step');
         const delta = Number(btn.getAttribute('data-delta'))||0;
         const input = document.getElementById(id);
